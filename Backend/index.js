@@ -96,7 +96,7 @@ class InternManagement {
                 batch: internData.batch,
                 roles: internData.roles || [],
                 currentProjects: internData.currentProjects || [],
-                tasksAssigned: JSON.stringify(tasks)
+                tasksAssigned: tasks  // Store as array, not JSON string
             };
 
             const response = await this.databases.createDocument(
@@ -142,7 +142,7 @@ class InternManagement {
                         updatedAt: new Date().toISOString()
                     };
                 });
-                data.tasksAssigned = JSON.stringify(tasks);
+                data.tasksAssigned = tasks;  // Store as array, not JSON string
             }
 
             const response = await this.databases.updateDocument(
@@ -226,13 +226,20 @@ class InternManagement {
             
             response.documents.forEach(intern => {
                 try {
-                    const tasks = JSON.parse(intern.tasksAssigned || '[]');
-                    tasks.forEach(task => {
-                        if (summary.hasOwnProperty(task.status)) {
-                            summary[task.status]++;
-                            summary.total++;
-                        }
-                    });
+                    // Handle both array and JSON string formats for backward compatibility
+                    let tasks = intern.tasksAssigned || [];
+                    if (typeof tasks === 'string') {
+                        tasks = JSON.parse(tasks);
+                    }
+                    
+                    if (Array.isArray(tasks)) {
+                        tasks.forEach(task => {
+                            if (summary.hasOwnProperty(task.status)) {
+                                summary[task.status]++;
+                                summary.total++;
+                            }
+                        });
+                    }
                 } catch (e) {
                     // Skip invalid task data
                 }
