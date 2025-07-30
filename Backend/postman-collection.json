@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Intern Management System - Simple API",
-    "description": "Simple API collection for Intern Management with task status tracking",
-    "version": "2.0.0",
+    "name": "Intern Management System - Clean API",
+    "description": "Clean API collection for Intern Management with task status tracking and custom document IDs",
+    "version": "2.1.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,7 +16,7 @@
     },
     {
       "key": "INTERN_ID",
-      "value": "intern-001",
+      "value": "custom-intern-001",
       "type": "string"
     }
   ],
@@ -53,7 +53,7 @@
           "response": []
         },
         {
-          "name": "POST Create Intern with Tasks",
+          "name": "POST Create Intern with Custom ID",
           "request": {
             "method": "POST",
             "header": [
@@ -64,14 +64,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"internName\": \"John Doe\",\n  \"batch\": \"2024-Summer\",\n  \"roles\": [\"Frontend Developer\"],\n  \"currentProjects\": [\"E-commerce Website\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-1\",\n      \"title\": \"Create Login Page\",\n      \"description\": \"Design and implement user login functionality\",\n      \"status\": \"open\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-2\",\n      \"title\": \"Setup Navigation\",\n      \"description\": \"Create responsive navigation menu\",\n      \"status\": \"todo\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
+              "raw": "{\n  \"documentId\": \"custom-intern-001\",\n  \"internName\": \"John Doe\",\n  \"batch\": \"2025-Summer\",\n  \"roles\": [\"Frontend Developer\"],\n  \"currentProjects\": [\"E-commerce Website\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-1\",\n      \"title\": \"Create Login Page\",\n      \"description\": \"Design and implement user login functionality\",\n      \"status\": \"open\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-2\",\n      \"title\": \"Setup Navigation\",\n      \"description\": \"Create responsive navigation menu\",\n      \"status\": \"todo\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/interns",
               "host": ["{{BASE_URL}}"],
               "path": ["interns"]
             },
-            "description": "Create a new intern with initial tasks"
+            "description": "Create a new intern with a custom document ID"
           },
           "response": []
         },
@@ -87,14 +87,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"internName\": \"Jane Smith\",\n  \"batch\": \"2024-Fall\",\n  \"roles\": [\"Backend Developer\"],\n  \"currentProjects\": [\"API Development\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-auto-1\",\n      \"title\": \"Database Schema\",\n      \"description\": \"Design and implement database schema\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
+              "raw": "{\n  \"internName\": \"Jane Smith\",\n  \"batch\": \"2025-Fall\",\n  \"roles\": [\"Backend Developer\"],\n  \"currentProjects\": [\"API Development\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-auto-1\",\n      \"title\": \"Database Schema\",\n      \"description\": \"Design and implement database schema\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/interns",
               "host": ["{{BASE_URL}}"],
               "path": ["interns"]
             },
-            "description": "Create a new intern with auto-generated ID"
+            "description": "Create a new intern with auto-generated ID (no documentId specified)"
           },
           "response": []
         },
@@ -110,7 +110,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"roles\": [\"Senior Frontend Developer\", \"Team Lead\"],\n  \"currentProjects\": [\"E-commerce Website\", \"Mobile App\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-1\",\n      \"title\": \"Create Login Page\",\n      \"description\": \"Design and implement user login functionality\",\n      \"status\": \"completed\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T12:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-2\",\n      \"title\": \"Setup Navigation\",\n      \"description\": \"Create responsive navigation menu\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T12:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-3\",\n      \"title\": \"Code Review\",\n      \"description\": \"Review team member code\",\n      \"status\": \"pending\",\n      \"assignedAt\": \"2024-07-30T12:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T12:00:00.000Z\"\n    }\n  ]\n}"
+              "raw": "{\n  \"roles\": [\"Senior Frontend Developer\", \"Team Lead\"],\n  \"currentProjects\": [\"E-commerce Website\", \"Mobile App\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-1\",\n      \"title\": \"Create Login Page\",\n      \"description\": \"Design and implement user login functionality\",\n      \"status\": \"completed\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T12:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-2\",\n      \"title\": \"Setup Navigation\",\n      \"description\": \"Create responsive navigation menu\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T12:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-3\",\n      \"title\": \"Code Review\",\n      \"description\": \"Review team member code\",\n      \"status\": \"pending\",\n      \"assignedAt\": \"2025-07-30T12:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T12:00:00.000Z\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/interns/{{INTERN_ID}}",
@@ -146,13 +146,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/interns?batch=2024-Summer",
+              "raw": "{{BASE_URL}}/interns?batch=2025-Summer",
               "host": ["{{BASE_URL}}"],
               "path": ["interns"],
               "query": [
                 {
                   "key": "batch",
-                  "value": "2024-Summer",
+                  "value": "2025-Summer",
                   "description": "Filter by specific batch"
                 }
               ]
@@ -183,7 +183,7 @@
           "response": []
         },
         {
-          "name": "Pagination (First 10)",
+          "name": "Pagination",
           "request": {
             "method": "GET",
             "header": [],
@@ -237,10 +237,10 @@
       ]
     },
     {
-      "name": "Task Status Examples",
+      "name": "Task Status Example",
       "item": [
         {
-          "name": "Intern with OPEN Tasks",
+          "name": "Intern with All Task Statuses",
           "request": {
             "method": "POST",
             "header": [
@@ -251,53 +251,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"internName\": \"Alice Johnson\",\n  \"batch\": \"2024-Fall\",\n  \"roles\": [\"Backend Developer\"],\n  \"currentProjects\": [\"API Development\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-open-1\",\n      \"title\": \"Database Design\",\n      \"description\": \"Design database schema for new features\",\n      \"status\": \"open\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-open-2\",\n      \"title\": \"API Documentation\",\n      \"description\": \"Write comprehensive API documentation\",\n      \"status\": \"open\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}/interns",
-              "host": ["{{BASE_URL}}"],
-              "path": ["interns"]
-            },
-            "description": "Create intern with OPEN status tasks"
-          },
-          "response": []
-        },
-        {
-          "name": "Intern with WORKING Tasks",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"internName\": \"Bob Wilson\",\n  \"batch\": \"2024-Spring\",\n  \"roles\": [\"Full Stack Developer\"],\n  \"currentProjects\": [\"Dashboard Application\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-working-1\",\n      \"title\": \"Frontend Components\",\n      \"description\": \"Build reusable React components\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-working-2\",\n      \"title\": \"API Integration\",\n      \"description\": \"Integrate with backend APIs\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}/interns",
-              "host": ["{{BASE_URL}}"],
-              "path": ["interns"]
-            },
-            "description": "Create intern with WORKING status tasks"
-          },
-          "response": []
-        },
-        {
-          "name": "Intern with Mixed Task Statuses",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"internName\": \"Carol Davis\",\n  \"batch\": \"2024-Winter\",\n  \"roles\": [\"DevOps Engineer\", \"Full Stack Developer\"],\n  \"currentProjects\": [\"CI/CD Pipeline\", \"Monitoring System\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-mix-1\",\n      \"title\": \"Setup Environment\",\n      \"description\": \"Configure development environment\",\n      \"status\": \"completed\",\n      \"assignedAt\": \"2024-07-29T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-mix-2\",\n      \"title\": \"Docker Configuration\",\n      \"description\": \"Setup Docker containers\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-mix-3\",\n      \"title\": \"Testing Setup\",\n      \"description\": \"Configure automated testing\",\n      \"status\": \"todo\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-mix-4\",\n      \"title\": \"Security Review\",\n      \"description\": \"Review security configurations\",\n      \"status\": \"pending\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-mix-5\",\n      \"title\": \"Performance Optimization\",\n      \"description\": \"Optimize system performance\",\n      \"status\": \"deferred\",\n      \"assignedAt\": \"2024-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2024-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
+              "raw": "{\n  \"documentId\": \"demo-intern-all-statuses\",\n  \"internName\": \"Demo User\",\n  \"batch\": \"2025-Demo\",\n  \"roles\": [\"Full Stack Developer\"],\n  \"currentProjects\": [\"Demo Project\"],\n  \"tasksAssigned\": [\n    {\n      \"id\": \"task-1\",\n      \"title\": \"Completed Task\",\n      \"description\": \"This task is completed\",\n      \"status\": \"completed\",\n      \"assignedAt\": \"2025-07-29T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-2\",\n      \"title\": \"Working Task\",\n      \"description\": \"This task is in progress\",\n      \"status\": \"working\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-3\",\n      \"title\": \"Todo Task\",\n      \"description\": \"This task is in todo\",\n      \"status\": \"todo\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-4\",\n      \"title\": \"Open Task\",\n      \"description\": \"This task is open\",\n      \"status\": \"open\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-5\",\n      \"title\": \"Pending Task\",\n      \"description\": \"This task is pending\",\n      \"status\": \"pending\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    },\n    {\n      \"id\": \"task-6\",\n      \"title\": \"Deferred Task\",\n      \"description\": \"This task is deferred\",\n      \"status\": \"deferred\",\n      \"assignedAt\": \"2025-07-30T10:00:00.000Z\",\n      \"updatedAt\": \"2025-07-30T10:00:00.000Z\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{BASE_URL}}/interns",
