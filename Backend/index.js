@@ -1,5 +1,5 @@
-require('dotenv').config();
-const { Client, Databases, ID } = require('node-appwrite');
+import 'dotenv/config';
+import { Client, Databases, ID } from 'node-appwrite';
 
 class InternManagement {
     constructor() {
@@ -77,8 +77,8 @@ class InternManagement {
             
             // Validate and prepare tasks
             let tasks = [];
-            if (internData.tasks && Array.isArray(internData.tasks)) {
-                tasks = internData.tasks.map(task => {
+            if (internData.tasksAssigned && Array.isArray(internData.tasksAssigned)) {
+                tasks = internData.tasksAssigned.map(task => {
                     this.validateTask(task);
                     return {
                         id: task.id || ID.unique(),
@@ -130,8 +130,8 @@ class InternManagement {
             if (updateData.currentProjects) data.currentProjects = updateData.currentProjects;
             
             // Handle tasks update
-            if (updateData.tasks && Array.isArray(updateData.tasks)) {
-                const tasks = updateData.tasks.map(task => {
+            if (updateData.tasksAssigned && Array.isArray(updateData.tasksAssigned)) {
+                const tasks = updateData.tasksAssigned.map(task => {
                     this.validateTask(task);
                     return {
                         id: task.id || ID.unique(),
@@ -355,6 +355,70 @@ class InternManagement {
             };
         }
     }
+
+    // Get intern count
+    async getInternCount() {
+        try {
+            const response = await this.databases.listDocuments(
+                this.databaseId,
+                this.collectionId,
+                ['limit(1)']
+            );
+            return {
+                success: true,
+                count: response.total
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Get task summary across all interns
+    async getTaskSummary() {
+        try {
+            const response = await this.databases.listDocuments(
+                this.databaseId,
+                this.collectionId
+            );
+            
+            const summary = {
+                open: 0,
+                completed: 0,
+                todo: 0,
+                working: 0,
+                deferred: 0,
+                pending: 0,
+                total: 0
+            };
+            
+            response.documents.forEach(intern => {
+                try {
+                    const tasks = JSON.parse(intern.tasksAssigned || '[]');
+                    tasks.forEach(task => {
+                        if (summary.hasOwnProperty(task.status)) {
+                            summary[task.status]++;
+                            summary.total++;
+                        }
+                    });
+                } catch (e) {
+                    // Skip invalid task data
+                }
+            });
+            
+            return {
+                success: true,
+                summary
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
 }
 
 // Initialize system
@@ -380,12 +444,124 @@ async function initializeSystem() {
     }
 }
 
-// Export the class
-module.exports = { InternManagement, initializeSystem };
+// Appwrite Function Handler
+export default async ({ req, res, log, error }) => {
+    try {
+        const internSystem = new InternManagement();
+        
+        // Parse request
+        const method = req.method;
+        const path = req.path || '';
+        const pathParts = path.split('/').filter(part => part);
+        
+        log(`${method} ${path}`);
+        
+        // CORS Headers
+        res.headers['Access-Control-Allow-Origin'] = '*';
+        res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PATCH, DELETE, OPTIONS';
+        res.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+        
+        // Handle OPTIONS request for CORS
+        if (method === 'OPTIONS') {
+            return res.send('', 200);
+        }
+        
+        let body = {};
+        if (req.body && req.bodyRaw) {
+            try {
+                body = JSON.parse(req.bodyRaw);
+            } catch (e) {
+                body = req.body;
+            }
+        }
+        
+        // Route handling
+        if (pathParts[0] === 'interns' || pathParts.length === 0) {
+            
+            // GET /interns - Get all interns
+            if (method === 'GET' && pathParts.length <= 1) {
+                const queries = [];
+                
+                // Handle query parameters
+                if (req.query) {
+                    if (req.query.batch) {
+                        queries.push(`equal("batch", "${req.query.batch}")`);
+                    }
+                    if (req.query.search) {
+                        queries.push(`search("internName", "${req.query.search}")`);
+                    }
+                    if (req.query.limit) {
+                        queries.push(`limit(${parseInt(req.query.limit)})`);
+                    }
+                    if (req.query.offset) {
+                        queries.push(`offset(${parseInt(req.query.offset)})`);
+                    }
+                    if (req.query.sort && req.query.order) {
+                        const order = req.query.order === 'desc' ? 'orderDesc' : 'orderAsc';
+                        queries.push(`${order}("${req.query.sort}")`);
+                    }
+                }
+                
+                const result = await internSystem.getAllInterns(queries);
+                return res.json(result);
+            }
+            
+            // GET /interns/:id - Get specific intern
+            if (method === 'GET' && pathParts.length === 2) {
+                const internId = pathParts[1];
+                const result = await internSystem.getIntern(internId);
+                return res.json(result);
+            }
+            
+            // POST /interns - Create new intern
+            if (method === 'POST' && pathParts.length <= 1) {
+                const result = await internSystem.createIntern(body);
+                return res.json(result);
+            }
+            
+            // PATCH /interns/:id - Update intern
+            if (method === 'PATCH' && pathParts.length === 2) {
+                const internId = pathParts[1];
+                const result = await internSystem.updateIntern(internId, body);
+                return res.json(result);
+            }
+            
+            // DELETE /interns/:id - Delete intern
+            if (method === 'DELETE' && pathParts.length === 2) {
+                const internId = pathParts[1];
+                const result = await internSystem.deleteIntern(internId);
+                return res.json(result);
+            }
+            
+            // GET /interns/count - Get count
+            if (method === 'GET' && pathParts[1] === 'count') {
+                const result = await internSystem.getInternCount();
+                return res.json(result);
+            }
+            
+            // GET /interns/tasks/summary - Get task summary
+            if (method === 'GET' && pathParts[1] === 'tasks' && pathParts[2] === 'summary') {
+                const result = await internSystem.getTaskSummary();
+                return res.json(result);
+            }
+        }
+        
+        // Route not found
+        return res.json({
+            success: false,
+            error: 'Route not found',
+            method,
+            path
+        }, 404);
+        
+    } catch (err) {
+        error('Function error:', err);
+        return res.json({
+            success: false,
+            error: err.message
+        }, 500);
+    }
+};
 
-// Run initialization if this file is executed directly
-if (require.main === module) {
-    initializeSystem().then(system => {
-        console.log('System ready for use!');
-    }).catch(console.error);
-}
+// Also export the class for testing
+export { InternManagement, initializeSystem };
