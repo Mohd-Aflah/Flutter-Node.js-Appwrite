@@ -1,7 +1,22 @@
+/**
+ * @fileoverview Intern Management System API
+ * @description A comprehensive REST API for managing interns and their assigned tasks
+ * @author Your Name
+ * @version 2.1.0
+ */
+
 import 'dotenv/config';
 import { Client, Databases, ID } from 'node-appwrite';
 
+/**
+ * @class InternManagement
+ * @description Main class for handling intern management operations
+ */
 class InternManagement {
+    /**
+     * @constructor
+     * @description Initializes the Appwrite client and database connections
+     */
     constructor() {
         this.client = new Client();
         this.databases = new Databases(this.client);
@@ -19,7 +34,17 @@ class InternManagement {
         this.validTaskStatuses = ['open', 'completed', 'todo', 'working', 'deferred', 'pending'];
     }
 
-    // Validate task data
+    /**
+     * @method validateTask
+     * @description Validates task data structure and required fields
+     * @param {Object} task - The task object to validate
+     * @param {string} task.title - Required task title
+     * @param {string} task.status - Required task status
+     * @param {string} [task.description] - Optional task description
+     * @param {string} [task.id] - Optional task ID
+     * @returns {boolean} Returns true if valid
+     * @throws {Error} Throws error if validation fails
+     */
     validateTask(task) {
         if (!task.title) throw new Error('Task title is required');
         if (!task.status) throw new Error('Task status is required');
@@ -29,7 +54,21 @@ class InternManagement {
         return true;
     }
 
-    // GET /interns - Get all interns
+    /**
+     * @method getAllInterns
+     * @description Retrieves all interns from the database with optional filtering
+     * @param {string[]} [queries=[]] - Array of Appwrite query strings for filtering
+     * @returns {Promise<Object>} Promise resolving to response object
+     * @returns {boolean} returns.success - Indicates if operation was successful
+     * @returns {Object[]} returns.data - Array of intern objects with parsed tasks
+     * @returns {number} returns.total - Total number of matching documents
+     * @example
+     * // Get all interns
+     * const result = await getAllInterns();
+     * 
+     * // Get interns with filtering
+     * const filtered = await getAllInterns(['equal("batch", "2025-Summer")', 'limit(10)']);
+     */
     async getAllInterns(queries = []) {
         try {
             const response = await this.databases.listDocuments(
@@ -66,7 +105,16 @@ class InternManagement {
         }
     }
 
-    // GET /interns/:id - Get specific intern
+    /**
+     * @method getIntern
+     * @description Retrieves a specific intern by their document ID
+     * @param {string} internId - The unique document ID of the intern
+     * @returns {Promise<Object>} Promise resolving to response object
+     * @returns {boolean} returns.success - Indicates if operation was successful
+     * @returns {Object} returns.data - Intern object with parsed tasks
+     * @example
+     * const result = await getIntern('custom-intern-001');
+     */
     async getIntern(internId) {
         try {
             const response = await this.databases.getDocument(
@@ -99,7 +147,34 @@ class InternManagement {
         }
     }
 
-    // POST /interns - Create new intern
+    /**
+     * @method createIntern
+     * @description Creates a new intern document in the database
+     * @param {Object} internData - The intern data object
+     * @param {string} [internData.documentId] - Optional custom document ID
+     * @param {string} internData.internName - Required name of the intern
+     * @param {string} internData.batch - Required batch identifier
+     * @param {string[]} [internData.roles] - Optional array of roles
+     * @param {string[]} [internData.currentProjects] - Optional array of current projects
+     * @param {Object[]} [internData.tasksAssigned] - Optional array of tasks
+     * @param {string} [customId=null] - Alternative way to provide custom document ID
+     * @returns {Promise<Object>} Promise resolving to response object
+     * @returns {boolean} returns.success - Indicates if operation was successful
+     * @returns {Object} returns.data - Created intern document
+     * @returns {string} returns.message - Success message
+     * @example
+     * const newIntern = {
+     *   documentId: 'custom-id-001',
+     *   internName: 'John Doe',
+     *   batch: '2025-Summer',
+     *   roles: ['Frontend Developer'],
+     *   tasksAssigned: [{
+     *     title: 'Setup Environment',
+     *     status: 'open'
+     *   }]
+     * };
+     * const result = await createIntern(newIntern);
+     */
     async createIntern(internData, customId = null) {
         try {
             // Use custom ID from request body if provided, otherwise generate one
@@ -151,7 +226,31 @@ class InternManagement {
         }
     }
 
-    // PATCH /interns/:id - Update intern
+    /**
+     * @method updateIntern
+     * @description Updates an existing intern's information and tasks
+     * @param {string} internId - The document ID of the intern to update
+     * @param {Object} updateData - Object containing fields to update
+     * @param {string} [updateData.internName] - New intern name
+     * @param {string} [updateData.batch] - New batch identifier
+     * @param {string[]} [updateData.roles] - New array of roles
+     * @param {string[]} [updateData.currentProjects] - New array of projects
+     * @param {Object[]} [updateData.tasksAssigned] - New array of tasks
+     * @returns {Promise<Object>} Promise resolving to response object
+     * @returns {boolean} returns.success - Indicates if operation was successful
+     * @returns {Object} returns.data - Updated intern document
+     * @returns {string} returns.message - Success message
+     * @example
+     * const updates = {
+     *   roles: ['Senior Developer'],
+     *   tasksAssigned: [{
+     *     id: 'task-1',
+     *     title: 'Updated Task',
+     *     status: 'completed'
+     *   }]
+     * };
+     * const result = await updateIntern('intern-id', updates);
+     */
     async updateIntern(internId, updateData) {
         try {
             const data = {};
