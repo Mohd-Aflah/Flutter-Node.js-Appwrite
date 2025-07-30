@@ -186,176 +186,6 @@ class InternManagement {
         }
     }
 
-    // Add task to intern
-    async addTaskToIntern(internId, taskData) {
-        try {
-            // Get current intern
-            const internResult = await this.getIntern(internId);
-            if (!internResult.success) {
-                return internResult;
-            }
-
-            // Validate new task
-            this.validateTask(taskData);
-
-            // Parse existing tasks
-            let tasks = [];
-            if (internResult.data.tasksAssigned) {
-                try {
-                    tasks = JSON.parse(internResult.data.tasksAssigned);
-                } catch (e) {
-                    tasks = [];
-                }
-            }
-
-            // Add new task
-            const newTask = {
-                id: taskData.id || ID.unique(),
-                title: taskData.title,
-                description: taskData.description || '',
-                status: taskData.status,
-                assignedAt: taskData.assignedAt || new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-
-            tasks.push(newTask);
-
-            // Update intern with new tasks
-            return await this.updateIntern(internId, { tasks });
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    // Update task status
-    async updateTaskStatus(internId, taskId, newStatus) {
-        try {
-            if (!this.validTaskStatuses.includes(newStatus)) {
-                throw new Error(`Invalid task status. Must be one of: ${this.validTaskStatuses.join(', ')}`);
-            }
-
-            // Get current intern
-            const internResult = await this.getIntern(internId);
-            if (!internResult.success) {
-                return internResult;
-            }
-
-            // Parse existing tasks
-            let tasks = [];
-            if (internResult.data.tasksAssigned) {
-                try {
-                    tasks = JSON.parse(internResult.data.tasksAssigned);
-                } catch (e) {
-                    return { success: false, error: 'Invalid tasks data' };
-                }
-            }
-
-            // Find and update task
-            const taskIndex = tasks.findIndex(task => task.id === taskId);
-            if (taskIndex === -1) {
-                return { success: false, error: 'Task not found' };
-            }
-
-            tasks[taskIndex].status = newStatus;
-            tasks[taskIndex].updatedAt = new Date().toISOString();
-
-            // Update intern with modified tasks
-            return await this.updateIntern(internId, { tasks });
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    // Get interns by task status
-    async getInternsByTaskStatus(status) {
-        try {
-            if (!this.validTaskStatuses.includes(status)) {
-                throw new Error(`Invalid task status. Must be one of: ${this.validTaskStatuses.join(', ')}`);
-            }
-
-            // Get all interns
-            const allInterns = await this.getAllInterns();
-            if (!allInterns.success) {
-                return allInterns;
-            }
-
-            // Filter interns that have tasks with the specified status
-            const filteredInterns = allInterns.data.filter(intern => {
-                if (!intern.tasksAssigned) return false;
-                
-                try {
-                    const tasks = JSON.parse(intern.tasksAssigned);
-                    return tasks.some(task => task.status === status);
-                } catch (e) {
-                    return false;
-                }
-            });
-
-            return {
-                success: true,
-                data: filteredInterns,
-                total: filteredInterns.length
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    // Get task summary for all interns
-    async getTaskSummary() {
-        try {
-            const allInterns = await this.getAllInterns();
-            if (!allInterns.success) {
-                return allInterns;
-            }
-
-            const summary = {
-                totalInterns: allInterns.total,
-                taskStatusCounts: {}
-            };
-
-            // Initialize status counts
-            this.validTaskStatuses.forEach(status => {
-                summary.taskStatusCounts[status] = 0;
-            });
-
-            // Count tasks by status
-            allInterns.data.forEach(intern => {
-                if (intern.tasksAssigned) {
-                    try {
-                        const tasks = JSON.parse(intern.tasksAssigned);
-                        tasks.forEach(task => {
-                            if (summary.taskStatusCounts.hasOwnProperty(task.status)) {
-                                summary.taskStatusCounts[task.status]++;
-                            }
-                        });
-                    } catch (e) {
-                        // Skip invalid task data
-                    }
-                }
-            });
-
-            return {
-                success: true,
-                data: summary
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
     // Get intern count
     async getInternCount() {
         try {
@@ -421,59 +251,34 @@ class InternManagement {
     }
 }
 
-// Initialize system
-async function initializeSystem() {
+// Simple Appwrite Function Handler - Compatible with multiple versions
+export default async (context) => {
     try {
-        const internSystem = new InternManagement();
+        // Extract request and response objects from context
+        const { req, res, log, error } = context;
         
-        // Validate environment
-        const required = ['APPWRITE_ENDPOINT', 'APPWRITE_PROJECT_ID', 'APPWRITE_API_KEY', 'DATABASE_ID', 'COLLECTION_ID'];
-        const missing = required.filter(key => !process.env[key]);
-        
-        if (missing.length > 0) {
-            throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-        }
-
-        console.log('✅ Intern Management System initialized');
-        console.log(`📊 Valid task statuses: ${internSystem.validTaskStatuses.join(', ')}`);
-        
-        return internSystem;
-    } catch (error) {
-        console.error('❌ System initialization failed:', error.message);
-        process.exit(1);
-    }
-}
-
-// Appwrite Function Handler
-export default async ({ req, res, log, error }) => {
-    try {
         const internSystem = new InternManagement();
         
         // Parse request
         const method = req.method;
-        const path = req.path || '';
+        const path = req.path || req.url || '';
         const pathParts = path.split('/').filter(part => part);
         
-        log(`${method} ${path}`);
+        if (log) log(`${method} ${path}`);
         
-        // CORS Headers
-        res.headers['Access-Control-Allow-Origin'] = '*';
-        res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PATCH, DELETE, OPTIONS';
-        res.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-        
-        // Handle OPTIONS request for CORS
-        if (method === 'OPTIONS') {
-            return res.send('', 200);
-        }
-        
+        // Parse body
         let body = {};
-        if (req.body && req.bodyRaw) {
-            try {
+        try {
+            if (req.bodyRaw) {
                 body = JSON.parse(req.bodyRaw);
-            } catch (e) {
-                body = req.body;
+            } else if (req.body) {
+                body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
             }
+        } catch (e) {
+            body = {};
         }
+        
+        let result;
         
         // Route handling
         if (pathParts[0] === 'interns' || pathParts.length === 0) {
@@ -502,66 +307,70 @@ export default async ({ req, res, log, error }) => {
                     }
                 }
                 
-                const result = await internSystem.getAllInterns(queries);
-                return res.json(result);
+                result = await internSystem.getAllInterns(queries);
             }
             
             // GET /interns/:id - Get specific intern
-            if (method === 'GET' && pathParts.length === 2) {
+            else if (method === 'GET' && pathParts.length === 2) {
                 const internId = pathParts[1];
-                const result = await internSystem.getIntern(internId);
-                return res.json(result);
+                result = await internSystem.getIntern(internId);
             }
             
             // POST /interns - Create new intern
-            if (method === 'POST' && pathParts.length <= 1) {
-                const result = await internSystem.createIntern(body);
-                return res.json(result);
+            else if (method === 'POST' && pathParts.length <= 1) {
+                result = await internSystem.createIntern(body);
             }
             
             // PATCH /interns/:id - Update intern
-            if (method === 'PATCH' && pathParts.length === 2) {
+            else if (method === 'PATCH' && pathParts.length === 2) {
                 const internId = pathParts[1];
-                const result = await internSystem.updateIntern(internId, body);
-                return res.json(result);
+                result = await internSystem.updateIntern(internId, body);
             }
             
             // DELETE /interns/:id - Delete intern
-            if (method === 'DELETE' && pathParts.length === 2) {
+            else if (method === 'DELETE' && pathParts.length === 2) {
                 const internId = pathParts[1];
-                const result = await internSystem.deleteIntern(internId);
-                return res.json(result);
+                result = await internSystem.deleteIntern(internId);
             }
             
             // GET /interns/count - Get count
-            if (method === 'GET' && pathParts[1] === 'count') {
-                const result = await internSystem.getInternCount();
-                return res.json(result);
+            else if (method === 'GET' && pathParts[1] === 'count') {
+                result = await internSystem.getInternCount();
             }
             
             // GET /interns/tasks/summary - Get task summary
-            if (method === 'GET' && pathParts[1] === 'tasks' && pathParts[2] === 'summary') {
-                const result = await internSystem.getTaskSummary();
-                return res.json(result);
+            else if (method === 'GET' && pathParts[1] === 'tasks' && pathParts[2] === 'summary') {
+                result = await internSystem.getTaskSummary();
             }
+            
+            else {
+                result = { success: false, error: 'Method not allowed' };
+            }
+        } else {
+            result = { success: false, error: 'Route not found', method, path };
         }
         
-        // Route not found
-        return res.json({
-            success: false,
-            error: 'Route not found',
-            method,
-            path
-        }, 404);
+        // Return response
+        return res.send(JSON.stringify(result), 200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        });
         
     } catch (err) {
-        error('Function error:', err);
-        return res.json({
+        const { error, res } = context;
+        if (error) error('Function error:', err);
+        
+        return res.send(JSON.stringify({
             success: false,
             error: err.message
-        }, 500);
+        }), 500, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        });
     }
 };
 
 // Also export the class for testing
-export { InternManagement, initializeSystem };
+export { InternManagement };
