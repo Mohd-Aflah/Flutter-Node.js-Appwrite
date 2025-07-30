@@ -43,6 +43,7 @@ const server = http.createServer(async (req, res) => {
         }
         
         let result;
+        let statusCode = 200;
         
         // Route handling
         if (path === '/interns' || path === '/') {
@@ -59,6 +60,10 @@ const server = http.createServer(async (req, res) => {
                 result = await internSystem.getAllInterns(queries);
             } else if (method === 'POST') {
                 result = await internSystem.createIntern(body);
+                statusCode = 201; // Created
+            } else {
+                result = { success: false, error: 'Method not allowed' };
+                statusCode = 405;
             }
         } else if (path.startsWith('/interns/')) {
             const pathParts = path.split('/').filter(p => p);
@@ -76,27 +81,33 @@ const server = http.createServer(async (req, res) => {
                 result = await internSystem.updateIntern(internId, body);
             } else if (method === 'DELETE') {
                 result = await internSystem.deleteIntern(internId);
+                statusCode = 204; // No Content
+            } else {
+                result = { success: false, error: 'Method not allowed' };
+                statusCode = 405;
             }
-        }
-        
-        if (!result) {
-            result = { success: false, error: 'Route not found' };
-            res.writeHead(404);
         } else {
-            res.writeHead(result.success ? 200 : 400);
+            result = { success: false, error: 'Route not found' };
+            statusCode = 404;
         }
         
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(result));
+        // Set response status based on result
+        if (result && !result.success && statusCode === 200) {
+            statusCode = 400; // Bad Request
+        }
+        
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result || { success: false, error: 'No response' }));
         
     } catch (error) {
         console.error('Server error:', error);
-        res.writeHead(500);
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-            success: false,
-            error: error.message
-        }));
+        if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: false,
+                error: error.message
+            }));
+        }
     }
 });
 
