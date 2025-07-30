@@ -37,9 +37,25 @@ class InternManagement {
                 this.collectionId,
                 queries
             );
+            
+            // Parse tasks for client response
+            const documents = response.documents.map(intern => {
+                const internData = { ...intern };
+                if (internData.tasksAssigned && Array.isArray(internData.tasksAssigned)) {
+                    internData.tasksAssigned = internData.tasksAssigned.map(taskStr => {
+                        try {
+                            return JSON.parse(taskStr);
+                        } catch (e) {
+                            return taskStr; // Return as-is if not parseable
+                        }
+                    });
+                }
+                return internData;
+            });
+            
             return {
                 success: true,
-                data: response.documents,
+                data: documents,
                 total: response.total
             };
         } catch (error) {
@@ -58,9 +74,22 @@ class InternManagement {
                 this.collectionId,
                 internId
             );
+            
+            // Parse tasks for client response
+            const internData = { ...response };
+            if (internData.tasksAssigned && Array.isArray(internData.tasksAssigned)) {
+                internData.tasksAssigned = internData.tasksAssigned.map(taskStr => {
+                    try {
+                        return JSON.parse(taskStr);
+                    } catch (e) {
+                        return taskStr; // Return as-is if not parseable
+                    }
+                });
+            }
+            
             return {
                 success: true,
-                data: response
+                data: internData
             };
         } catch (error) {
             return {
@@ -80,7 +109,7 @@ class InternManagement {
             if (internData.tasksAssigned && Array.isArray(internData.tasksAssigned)) {
                 tasks = internData.tasksAssigned.map(task => {
                     this.validateTask(task);
-                    return {
+                    const taskObj = {
                         id: task.id || ID.unique(),
                         title: task.title,
                         description: task.description || '',
@@ -88,6 +117,8 @@ class InternManagement {
                         assignedAt: task.assignedAt || new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
+                    // Convert each task object to JSON string for array storage
+                    return JSON.stringify(taskObj);
                 });
             }
             
@@ -96,7 +127,7 @@ class InternManagement {
                 batch: internData.batch,
                 roles: internData.roles || [],
                 currentProjects: internData.currentProjects || [],
-                tasksAssigned: tasks  // Store as array, not JSON string
+                tasksAssigned: tasks  // Array of JSON strings
             };
 
             const response = await this.databases.createDocument(
@@ -133,7 +164,7 @@ class InternManagement {
             if (updateData.tasksAssigned && Array.isArray(updateData.tasksAssigned)) {
                 const tasks = updateData.tasksAssigned.map(task => {
                     this.validateTask(task);
-                    return {
+                    const taskObj = {
                         id: task.id || ID.unique(),
                         title: task.title,
                         description: task.description || '',
@@ -141,8 +172,10 @@ class InternManagement {
                         assignedAt: task.assignedAt || new Date().toISOString(),
                         updatedAt: new Date().toISOString()
                     };
+                    // Convert each task object to JSON string for array storage
+                    return JSON.stringify(taskObj);
                 });
-                data.tasksAssigned = tasks;  // Store as array, not JSON string
+                data.tasksAssigned = tasks;  // Array of JSON strings
             }
 
             const response = await this.databases.updateDocument(
@@ -226,17 +259,30 @@ class InternManagement {
             
             response.documents.forEach(intern => {
                 try {
-                    // Handle both array and JSON string formats for backward compatibility
+                    // Handle different formats for backward compatibility
                     let tasks = intern.tasksAssigned || [];
+                    
+                    // If it's a string (old format), parse it
                     if (typeof tasks === 'string') {
                         tasks = JSON.parse(tasks);
                     }
                     
+                    // If it's an array, process each element
                     if (Array.isArray(tasks)) {
-                        tasks.forEach(task => {
-                            if (summary.hasOwnProperty(task.status)) {
-                                summary[task.status]++;
-                                summary.total++;
+                        tasks.forEach(taskItem => {
+                            try {
+                                // If array element is a string, parse it
+                                let task = taskItem;
+                                if (typeof taskItem === 'string') {
+                                    task = JSON.parse(taskItem);
+                                }
+                                
+                                if (task && task.status && summary.hasOwnProperty(task.status)) {
+                                    summary[task.status]++;
+                                    summary.total++;
+                                }
+                            } catch (taskError) {
+                                // Skip invalid task items
                             }
                         });
                     }
