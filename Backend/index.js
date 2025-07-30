@@ -102,7 +102,8 @@ class InternManagement {
     // POST /interns - Create new intern
     async createIntern(internData, customId = null) {
         try {
-            const documentId = customId || ID.unique();
+            // Use custom ID from request body if provided, otherwise generate one
+            const documentId = internData.documentId || customId || ID.unique();
             
             // Validate and prepare tasks
             let tasks = [];
@@ -371,7 +372,9 @@ export default async (context) => {
             
             // POST /interns - Create new intern
             else if (method === 'POST' && pathParts.length <= 1) {
-                result = await internSystem.createIntern(body);
+                // Extract document ID from request body if provided
+                const customId = body.documentId || null;
+                result = await internSystem.createIntern(body, customId);
             }
             
             // PATCH /interns/:id - Update intern
