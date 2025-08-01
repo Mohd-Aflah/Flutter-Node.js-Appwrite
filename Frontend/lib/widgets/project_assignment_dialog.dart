@@ -431,7 +431,7 @@ class _ProjectAssignmentDialogState extends State<ProjectAssignmentDialog> {
                       skill,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   );
                 }).toList(),
               ),

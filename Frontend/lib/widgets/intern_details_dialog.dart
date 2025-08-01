@@ -167,7 +167,7 @@ class _InternDetailsDialogState extends State<InternDetailsDialog>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
@@ -234,7 +234,7 @@ class _InternDetailsDialogState extends State<InternDetailsDialog>
                         ],
                       ),
                     ),
-                  ).toList(),
+                  ),
                 
                 const SizedBox(height: 12),
                 
