@@ -23,12 +23,12 @@ class SidebarNavigation extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.8),
+            Theme.of(context).primaryColor.withValues(alpha: 0.8),
           ],
         ),
         boxShadow: isInDrawer ? null : [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(2, 0),
           ),
@@ -49,7 +49,7 @@ class SidebarNavigation extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -122,7 +122,7 @@ class SidebarNavigation extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -184,10 +184,10 @@ class SidebarNavigation extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
-              color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
+              color: isActive ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: isActive 
-                  ? Border.all(color: Colors.white.withOpacity(0.3))
+                  ? Border.all(color: Colors.white.withValues(alpha: 0.3))
                   : null,
             ),
             child: Row(

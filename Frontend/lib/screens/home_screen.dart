@@ -262,7 +262,7 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(isMobile ? 8 : 12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
                 ),
                 child: Icon(icon, color: color, size: isMobile ? 20 : 24),
@@ -307,7 +307,7 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -549,7 +549,7 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -570,7 +570,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: isMobile ? 20 : 24,
-                      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       child: Text(
                         intern.internName.isNotEmpty 
                             ? intern.internName[0].toUpperCase()
@@ -652,7 +652,7 @@ class HomeScreen extends StatelessWidget {
                           vertical: isMobile ? 2 : 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withOpacity(0.1),
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
                         ),
                         child: Text(

@@ -138,7 +138,7 @@ class _TasksScreenState extends State<TasksScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -153,7 +153,7 @@ class _TasksScreenState extends State<TasksScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -196,7 +196,7 @@ class _TasksScreenState extends State<TasksScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -385,10 +385,10 @@ class _TasksScreenState extends State<TasksScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -431,9 +431,9 @@ class _TasksScreenState extends State<TasksScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
+                              color: statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: statusColor.withOpacity(0.3)),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -512,7 +512,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -533,7 +533,7 @@ class _TasksScreenState extends State<TasksScreen> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   child: Text(
                     intern.internName.isNotEmpty
                         ? intern.internName[0].toUpperCase()
@@ -795,7 +795,7 @@ class _TaskWithInternSelectionDialogState extends State<_TaskWithInternSelection
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? Theme.of(context).primaryColor.withOpacity(0.1)
+                          ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected 
@@ -804,7 +804,7 @@ class _TaskWithInternSelectionDialogState extends State<_TaskWithInternSelection
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         child: Text(
                           intern.internName.isNotEmpty
                               ? intern.internName[0].toUpperCase()
