@@ -404,56 +404,106 @@ class InternManagement {
     }
 }
 
-// Simple Appwrite Function Handler - Compatible with multiple versions
+/**
+ * @function default
+ * @description Main Appwrite Function handler for the Intern Management System
+ * @description Handles all HTTP requests and routes them to appropriate intern management operations
+ * @description Supports CRUD operations for interns, task management, and analytics
+ * 
+ * @param {Object} context - Appwrite function execution context
+ * @param {Object} context.req - HTTP request object containing method, path, headers, and body
+ * @param {Object} context.res - HTTP response object for sending responses
+ * @param {Function} context.log - Logging function for debug information
+ * @param {Function} context.error - Error logging function for exceptions
+ * 
+ * @returns {Promise<Object>} HTTP response with JSON data
+ * 
+ * @apiSuccess {boolean} success - Indicates if the operation was successful
+ * @apiSuccess {Object|Array} data - Response data (intern objects, counts, etc.)
+ * @apiSuccess {string} [message] - Success message for create/update operations
+ * @apiSuccess {number} [total] - Total count for list operations
+ * 
+ * @apiError {boolean} success - Always false for errors
+ * @apiError {string} error - Error message describing what went wrong
+ * 
+ * @example
+ * // GET /interns - Retrieve all interns
+ * // GET /interns/123 - Retrieve specific intern
+ * // POST /interns - Create new intern
+ * // PATCH /interns/123 - Update intern
+ * // DELETE /interns/123 - Delete intern
+ * // GET /interns/count - Get intern count
+ * // GET /interns/tasks/summary - Get task statistics
+ */
 export default async (context) => {
     try {
         // Extract request and response objects from context
+        // These objects contain all the necessary information for handling the HTTP request
         const { req, res, log, error } = context;
         
+        // Initialize the intern management system
+        // This creates a new instance with database connections and validation rules
         const internSystem = new InternManagement();
         
-        // Parse request
+        // Parse and normalize the incoming HTTP request
+        // Extract method (GET, POST, PATCH, DELETE) and clean the path
         const method = req.method;
         const path = req.path || req.url || '';
         const pathParts = path.split('/').filter(part => part);
         
-        if (log) log(`${method} ${path}`);
+        // Log the incoming request for debugging and monitoring
+        if (log) log(`📝 ${method} ${path}`);
         
-        // Parse body
+        // Parse the request body safely
+        // Handle different body formats that might come from various clients
         let body = {};
         try {
             if (req.bodyRaw) {
+                // Raw body string needs to be parsed as JSON
                 body = JSON.parse(req.bodyRaw);
             } else if (req.body) {
+                // Body might already be parsed or still be a string
                 body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
             }
         } catch (e) {
+            // If body parsing fails, use empty object (for GET requests this is normal)
             body = {};
         }
         
         let result;
         
-        // Route handling
+        // MAIN ROUTING LOGIC
+        // Route all intern-related requests to appropriate handlers
         if (pathParts[0] === 'interns' || pathParts.length === 0) {
             
-            // GET /interns - Get all interns
+            // GET /interns - Retrieve all interns with optional filtering and pagination
             if (method === 'GET' && pathParts.length <= 1) {
                 const queries = [];
                 
-                // Handle query parameters
+                // Process query parameters for filtering and pagination
+                // These parameters allow clients to filter, search, and paginate results
                 if (req.query) {
+                    // Filter by batch (e.g., "2025-Summer")
                     if (req.query.batch) {
                         queries.push(`equal("batch", "${req.query.batch}")`);
                     }
+                    
+                    // Search by intern name (partial matching)
                     if (req.query.search) {
                         queries.push(`search("internName", "${req.query.search}")`);
                     }
+                    
+                    // Pagination: limit number of results
                     if (req.query.limit) {
                         queries.push(`limit(${parseInt(req.query.limit)})`);
                     }
+                    
+                    // Pagination: skip number of results (for page navigation)
                     if (req.query.offset) {
                         queries.push(`offset(${parseInt(req.query.offset)})`);
                     }
+                    
+                    // Sorting: order results by field and direction
                     if (req.query.sort && req.query.order) {
                         const order = req.query.order === 'desc' ? 'orderDesc' : 'orderAsc';
                         queries.push(`${order}("${req.query.sort}")`);
@@ -463,59 +513,67 @@ export default async (context) => {
                 result = await internSystem.getAllInterns(queries);
             }
             
-            // GET /interns/:id - Get specific intern
+            // GET /interns/:id - Retrieve a specific intern by their ID
             else if (method === 'GET' && pathParts.length === 2) {
                 const internId = pathParts[1];
                 result = await internSystem.getIntern(internId);
             }
             
-            // POST /interns - Create new intern
+            // POST /interns - Create a new intern record
             else if (method === 'POST' && pathParts.length <= 1) {
-                // Extract document ID from request body if provided
+                // Extract custom document ID from request body if provided
+                // This allows clients to specify their own IDs instead of auto-generated ones
                 const customId = body.documentId || null;
                 result = await internSystem.createIntern(body, customId);
             }
             
-            // PATCH /interns/:id - Update intern
+            // PATCH /interns/:id - Update an existing intern's information
             else if (method === 'PATCH' && pathParts.length === 2) {
                 const internId = pathParts[1];
                 result = await internSystem.updateIntern(internId, body);
             }
             
-            // DELETE /interns/:id - Delete intern
+            // DELETE /interns/:id - Remove an intern from the system
             else if (method === 'DELETE' && pathParts.length === 2) {
                 const internId = pathParts[1];
                 result = await internSystem.deleteIntern(internId);
             }
             
-            // GET /interns/count - Get count
+            // GET /interns/count - Get total number of interns (for dashboards)
             else if (method === 'GET' && pathParts[1] === 'count') {
                 result = await internSystem.getInternCount();
             }
             
-            // GET /interns/tasks/summary - Get task summary
+            // GET /interns/tasks/summary - Get task statistics across all interns
             else if (method === 'GET' && pathParts[1] === 'tasks' && pathParts[2] === 'summary') {
                 result = await internSystem.getTaskSummary();
             }
             
+            // Handle unsupported HTTP methods for intern routes
             else {
-                result = { success: false, error: 'Method not allowed' };
+                result = { success: false, error: 'Method not allowed for this endpoint' };
             }
-        } else {
+        } 
+        // Handle routes that don't start with 'interns'
+        else {
             result = { success: false, error: 'Route not found', method, path };
         }
         
-        // Return response
+        // RESPONSE HANDLING
+        // Send the result back to the client with appropriate headers
         return res.send(JSON.stringify(result), 200, {
             'Content-Type': 'application/json',
+            // CORS headers to allow cross-origin requests from frontend
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization'
         });
         
     } catch (err) {
+        // GLOBAL ERROR HANDLING
+        // Catch any unhandled errors and return a proper error response
         const { error, res } = context;
-        if (error) error('Function error:', err);
+        if (error) error('🚨 Function error:', err);
         
         return res.send(JSON.stringify({
             success: false,
@@ -529,3 +587,10 @@ export default async (context) => {
 
 // Also export the class for testing
 export { InternManagement };
+
+/**
+ * @exports InternManagement
+ * @description Export the InternManagement class for unit testing and external usage
+ * @description This allows developers to test the class methods independently from the Appwrite function
+ * @description Can be imported in test files or other modules that need intern management functionality
+ */

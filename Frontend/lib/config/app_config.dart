@@ -8,6 +8,8 @@ class AppConfig {
   static const String internsEndpoint = '/interns';
   static const String internCountEndpoint = '/interns/count';
   static const String taskSummaryEndpoint = '/interns/tasks/summary';
+  static const String projectsEndpoint = '/projects';
+  static const String projectCountEndpoint = '/projects/count';
   
   // Request timeouts
   static const Duration connectTimeout = Duration(seconds: 15);
@@ -40,14 +42,31 @@ class AppConfig {
     'deferred': '#795548',   // Brown
     'pending': '#607D8B',    // Blue Grey
   };
-  
+
+  // Available Roles for Interns
+  static const List<String> availableRoles = [
+    'Frontend Developer',
+    'Backend Developer',
+    'Full Stack Developer',
+    'Mobile Developer',
+    'DevOps Engineer',
+    'UI/UX Designer',
+    'QA Engineer',
+    'Data Scientist',
+    'Machine Learning Engineer',
+    'Project Manager',
+    'Team Lead',
+    'Senior Frontend Developer',
+    'Senior Backend Developer',
+    'Technical Lead',
+    'Software Architect',
+  ];
+
   // Validation Rules
   static const int maxInternNameLength = 50;
   static const int maxBatchLength = 20;
   static const int maxTaskTitleLength = 100;
-  static const int maxTaskDescriptionLength = 500;
-  
-  // Environment specific configurations
+  static const int maxTaskDescriptionLength = 500;  // Environment specific configurations
   static bool get isProduction => const bool.fromEnvironment('dart.vm.product');
   static bool get isDebug => !isProduction;
 }

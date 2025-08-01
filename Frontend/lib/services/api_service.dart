@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../models/intern.dart';
 import '../models/task.dart';
+import '../models/project.dart';
 
 /// API service for handling HTTP requests to the Intern Management backend
 class ApiService {
@@ -47,14 +50,20 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.internsEndpoint}');
+      
+      // Temporarily disable query parameters due to Appwrite function issue
+      // TODO: Re-enable once Appwrite function handles query parameters properly
       final queryParams = <String, String>{};
 
+      // Only add search and batch filters for now (these are more critical)
       if (batch != null && batch.isNotEmpty) queryParams['batch'] = batch;
       if (search != null && search.isNotEmpty) queryParams['search'] = search;
-      if (limit != null) queryParams['limit'] = limit.toString();
-      if (offset != null) queryParams['offset'] = offset.toString();
-      if (sort != null && sort.isNotEmpty) queryParams['sort'] = sort;
-      if (order != null && order.isNotEmpty) queryParams['order'] = order;
+      
+      // Skip pagination and sorting parameters that cause "Syntax error"
+      // if (limit != null) queryParams['limit'] = limit.toString();
+      // if (offset != null) queryParams['offset'] = offset.toString();
+      // if (sort != null && sort.isNotEmpty) queryParams['sort'] = sort;
+      // if (order != null && order.isNotEmpty) queryParams['order'] = order;
 
       final finalUri = queryParams.isEmpty
           ? uri
@@ -70,10 +79,17 @@ class ApiService {
         final internsData = data['data'] as List;
         return internsData.map((json) => _parseInternJson(json)).toList();
       } else {
-        throw Exception(data['error'] ?? 'Failed to fetch interns');
+        throw Exception(data['error'] ?? 'Unable to load interns');
       }
+    } on TimeoutException {
+      throw Exception('Connection timeout. Please check your internet connection.');
+    } on SocketException {
+      throw Exception('No internet connection. Please check your network.');
     } catch (e) {
-      throw Exception('Network error: $e');
+      if (e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception('Failed to connect to server. Please try again later.');
     }
   }
 
@@ -273,6 +289,271 @@ class ApiService {
           ? DateTime.tryParse(json['updatedAt']) ?? DateTime.now()
           : DateTime.now(),
     );
+  }
+
+  // PROJECT MANAGEMENT METHODS
+
+  /// Get all projects with optional filtering
+  /// Returns a list of Project objects from the backend
+  /// Supports filtering by status, priority, and search terms
+  Future<List<Project>> getAllProjects({
+    String? status,
+    String? priority,
+    String? search,
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}');
+      
+      final queryParams = <String, String>{};
+      
+      // Add filtering parameters
+      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (priority != null && priority.isNotEmpty) queryParams['priority'] = priority;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (limit != null) queryParams['limit'] = limit.toString();
+      if (offset != null) queryParams['offset'] = offset.toString();
+
+      final finalUri = queryParams.isEmpty
+          ? uri
+          : uri.replace(queryParameters: queryParams);
+
+      final response = await _client
+          .get(finalUri, headers: _headers)
+          .timeout(AppConfig.connectTimeout);
+
+      final data = _handleResponse(response);
+
+      if (data['success'] == true && data['data'] is List) {
+        final projectsData = data['data'] as List;
+        return projectsData.map((json) => Project.fromJson(json)).toList();
+      } else {
+        throw Exception(data['error'] ?? 'Unable to load projects');
+      }
+    } on TimeoutException {
+      throw Exception('Connection timeout. Please check your internet connection.');
+    } on SocketException {
+      throw Exception('No internet connection. Please check your network.');
+    } catch (e) {
+      if (e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception('Failed to connect to server. Please try again later.');
+    }
+  }
+
+  /// Get a specific project by ID
+  /// Returns a single Project object from the backend
+  Future<Project> getProject(String projectId) async {
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}/$projectId');
+
+      final response = await _client
+          .get(uri, headers: _headers)
+          .timeout(AppConfig.connectTimeout);
+
+      final data = _handleResponse(response);
+
+      if (data['success'] == true && data['data'] is Map) {
+        return Project.fromJson(data['data']);
+      } else {
+        throw Exception(data['error'] ?? 'Project not found');
+      }
+    } catch (e) {
+      throw Exception('Failed to get project: $e');
+    }
+  }
+
+  /// Create a new project
+  /// Sends project data to backend and returns the created Project object
+  Future<Project> createProject(Project project) async {
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}');
+
+      final response = await _client
+          .post(
+            uri,
+            headers: _headers,
+            body: json.encode(project.toJson()),
+          )
+          .timeout(AppConfig.connectTimeout);
+
+      final data = _handleResponse(response);
+
+      if (data['success'] == true && data['data'] is Map) {
+        return Project.fromJson(data['data']);
+      } else {
+        throw Exception(data['error'] ?? 'Failed to create project');
+      }
+    } catch (e) {
+      throw Exception('Failed to create project: $e');
+    }
+  }
+
+  /// Update an existing project
+  /// Sends updated project data to backend and returns the updated Project object
+  Future<Project> updateProject(String projectId, Project project) async {
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}/$projectId');
+
+      final response = await _client
+          .patch(
+            uri,
+            headers: _headers,
+            body: json.encode(project.toJson()),
+          )
+          .timeout(AppConfig.connectTimeout);
+
+      final data = _handleResponse(response);
+
+      if (data['success'] == true && data['data'] is Map) {
+        return Project.fromJson(data['data']);
+      } else {
+        throw Exception(data['error'] ?? 'Failed to update project');
+      }
+    } catch (e) {
+      throw Exception('Failed to update project: $e');
+    }
+  }
+
+  /// Delete a project
+  /// Removes the project from the backend permanently
+  Future<bool> deleteProject(String projectId) async {
+    try {
+      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}/$projectId');
+
+      final response = await _client
+          .delete(uri, headers: _headers)
+          .timeout(AppConfig.connectTimeout);
+
+      final data = _handleResponse(response);
+
+      return data['success'] == true;
+    } catch (e) {
+      throw Exception('Failed to delete project: $e');
+    }
+  }
+
+  /// Assign a project to an intern
+  /// Updates the intern's currentProjects list to include the new project
+  Future<bool> assignProjectToIntern(String internId, String projectId) async {
+    try {
+      // First get the current intern data
+      final intern = await getIntern(internId);
+      
+      // Add the project to their current projects if not already assigned
+      final updatedProjects = List<String>.from(intern.currentProjects);
+      if (!updatedProjects.contains(projectId)) {
+        updatedProjects.add(projectId);
+        
+        // Update the intern with the new project list
+        final updatedIntern = intern.copyWith(currentProjects: updatedProjects);
+        await updateIntern(internId, updatedIntern);
+        return true;
+      }
+      
+      return false; // Project already assigned
+    } catch (e) {
+      throw Exception('Failed to assign project to intern: $e');
+    }
+  }
+
+  /// Unassign a project from an intern
+  /// Removes the project from the intern's currentProjects list
+  Future<bool> unassignProjectFromIntern(String internId, String projectId) async {
+    try {
+      // First get the current intern data
+      final intern = await getIntern(internId);
+      
+      // Remove the project from their current projects
+      final updatedProjects = List<String>.from(intern.currentProjects);
+      if (updatedProjects.remove(projectId)) {
+        // Update the intern with the new project list
+        final updatedIntern = intern.copyWith(currentProjects: updatedProjects);
+        await updateIntern(internId, updatedIntern);
+        return true;
+      }
+      
+      return false; // Project was not assigned
+    } catch (e) {
+      throw Exception('Failed to unassign project from intern: $e');
+    }
+  }
+
+  /// Add a task to an intern
+  /// Updates the intern's tasksAssigned list to include the new task
+  Future<bool> addTaskToIntern(String internId, Task task) async {
+    try {
+      // First get the current intern data
+      final intern = await getIntern(internId);
+      
+      // Add the task to their assigned tasks
+      final updatedTasks = List<Task>.from(intern.tasksAssigned);
+      updatedTasks.add(task);
+      
+      // Update the intern with the new task list
+      final updatedIntern = intern.copyWith(tasksAssigned: updatedTasks);
+      await updateIntern(internId, updatedIntern);
+      
+      return true;
+    } catch (e) {
+      throw Exception('Failed to add task to intern: $e');
+    }
+  }
+
+  /// Update a task for an intern
+  /// Finds and updates a specific task in the intern's tasksAssigned list
+  Future<bool> updateTaskForIntern(String internId, Task updatedTask) async {
+    try {
+      // First get the current intern data
+      final intern = await getIntern(internId);
+      
+      // Find and update the task
+      final updatedTasks = List<Task>.from(intern.tasksAssigned);
+      final taskIndex = updatedTasks.indexWhere((task) => task.id == updatedTask.id);
+      
+      if (taskIndex != -1) {
+        updatedTasks[taskIndex] = updatedTask;
+        
+        // Update the intern with the modified task list
+        final updatedIntern = intern.copyWith(tasksAssigned: updatedTasks);
+        await updateIntern(internId, updatedIntern);
+        
+        return true;
+      }
+      
+      return false; // Task not found
+    } catch (e) {
+      throw Exception('Failed to update task for intern: $e');
+    }
+  }
+
+  /// Remove a task from an intern
+  /// Removes a specific task from the intern's tasksAssigned list
+  Future<bool> removeTaskFromIntern(String internId, String taskId) async {
+    try {
+      // First get the current intern data
+      final intern = await getIntern(internId);
+      
+      // Remove the task from their assigned tasks
+      final updatedTasks = List<Task>.from(intern.tasksAssigned);
+      final initialLength = updatedTasks.length;
+      updatedTasks.removeWhere((task) => task.id == taskId);
+      final taskRemoved = updatedTasks.length < initialLength;
+      
+      if (taskRemoved) {
+        // Update the intern with the new task list
+        final updatedIntern = intern.copyWith(tasksAssigned: updatedTasks);
+        await updateIntern(internId, updatedIntern);
+        
+        return true;
+      }
+      
+      return false; // Task not found
+    } catch (e) {
+      throw Exception('Failed to remove task from intern: $e');
+    }
   }
 
   /// Dispose resources

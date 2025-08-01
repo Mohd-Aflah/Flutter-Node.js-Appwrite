@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 import '../controllers/intern_controller.dart';
 import '../models/intern.dart';
+import '../config/app_config.dart';
 
 /// Dialog for creating and editing interns
 class InternFormDialog extends StatefulWidget {
@@ -15,28 +17,28 @@ class InternFormDialog extends StatefulWidget {
 
 class _InternFormDialogState extends State<InternFormDialog> {
   final _formKey = GlobalKey<FormState>();
+  final _internIdController = TextEditingController();
   final _nameController = TextEditingController();
   final _batchController = TextEditingController();
-  final _rolesController = TextEditingController();
-  final _projectsController = TextEditingController();
+  
+  List<String> _selectedRoles = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.intern != null) {
+      _internIdController.text = widget.intern!.id;
       _nameController.text = widget.intern!.internName;
       _batchController.text = widget.intern!.batch;
-      _rolesController.text = widget.intern!.roles.join(', ');
-      _projectsController.text = widget.intern!.currentProjects.join(', ');
+      _selectedRoles = List.from(widget.intern!.roles);
     }
   }
 
   @override
   void dispose() {
+    _internIdController.dispose();
     _nameController.dispose();
     _batchController.dispose();
-    _rolesController.dispose();
-    _projectsController.dispose();
     super.dispose();
   }
 
@@ -61,6 +63,25 @@ class _InternFormDialogState extends State<InternFormDialog> {
                     ),
               ),
               const SizedBox(height: 24),
+              
+              // Intern ID field (only for new interns)
+              if (!isEditing) ...[
+                TextFormField(
+                  controller: _internIdController,
+                  decoration: const InputDecoration(
+                    labelText: 'Intern ID *',
+                    border: OutlineInputBorder(),
+                    hintText: 'e.g., INT001',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Intern ID is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
               
               // Name field
               TextFormField(
@@ -95,27 +116,69 @@ class _InternFormDialogState extends State<InternFormDialog> {
               ),
               const SizedBox(height: 16),
               
-              // Roles field
-              TextFormField(
-                controller: _rolesController,
-                decoration: const InputDecoration(
-                  labelText: 'Roles',
-                  border: OutlineInputBorder(),
-                  hintText: 'Frontend Developer, Backend Developer',
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              
-              // Current Projects field
-              TextFormField(
-                controller: _projectsController,
-                decoration: const InputDecoration(
-                  labelText: 'Current Projects',
-                  border: OutlineInputBorder(),
-                  hintText: 'E-commerce App, Mobile Development',
-                ),
-                maxLines: 2,
+              // Roles multi-select field
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Roles',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).inputDecorationTheme.labelStyle?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: MultiSelectDialogField<String>(
+                      items: AppConfig.availableRoles
+                          .map((role) => MultiSelectItem<String>(role, role))
+                          .toList(),
+                      title: const Text('Select Roles'),
+                      selectedColor: Theme.of(context).primaryColor,
+                      decoration: const BoxDecoration(),
+                      buttonIcon: const Icon(Icons.arrow_drop_down),
+                      buttonText: Text(
+                        _selectedRoles.isEmpty 
+                            ? 'Select roles' 
+                            : '${_selectedRoles.length} role(s) selected',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      onConfirm: (results) {
+                        setState(() {
+                          _selectedRoles = results;
+                        });
+                      },
+                      initialValue: _selectedRoles,
+                      searchable: true,
+                      searchHint: 'Search roles...',
+                    ),
+                  ),
+                  if (_selectedRoles.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _selectedRoles.map((role) {
+                        return Chip(
+                          label: Text(
+                            role,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          deleteIcon: const Icon(Icons.close, size: 16),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedRoles.remove(role);
+                            });
+                          },
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 24),
               
@@ -145,33 +208,20 @@ class _InternFormDialogState extends State<InternFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final controller = Get.find<InternController>();
-    
-    // Parse roles and projects from comma-separated strings
-    final roles = _rolesController.text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-    
-    final projects = _projectsController.text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
 
     final intern = Intern(
-      id: widget.intern?.id ?? '',
+      id: isEditing ? widget.intern!.id : _internIdController.text.trim(),
       internName: _nameController.text.trim(),
       batch: _batchController.text.trim(),
-      roles: roles,
-      currentProjects: projects,
+      roles: _selectedRoles,
+      currentProjects: widget.intern?.currentProjects ?? [],
       tasksAssigned: widget.intern?.tasksAssigned ?? [],
       createdAt: widget.intern?.createdAt,
       updatedAt: widget.intern?.updatedAt,
     );
 
     bool success;
-    if (widget.intern != null) {
+    if (isEditing) {
       // Update existing intern
       success = await controller.updateIntern(widget.intern!.id, intern);
     } else {
@@ -183,4 +233,6 @@ class _InternFormDialogState extends State<InternFormDialog> {
       Navigator.of(context).pop();
     }
   }
+
+  bool get isEditing => widget.intern != null;
 }

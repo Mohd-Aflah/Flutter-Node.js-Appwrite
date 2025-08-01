@@ -1,9 +1,15 @@
 // Simple Node.js version for local testing
 import { InternManagement } from './index.js';
+import { MockInternManagement } from './mock.js';
 import http from 'http';
 import url from 'url';
 
 const PORT = process.env.PORT || 3000;
+
+// Check if we should use mock data (when Appwrite is not configured)
+const USE_MOCK = !process.env.APPWRITE_PROJECT_ID || process.env.USE_MOCK === 'true';
+
+console.log(`🔧 Running in ${USE_MOCK ? 'MOCK' : 'APPWRITE'} mode`);
 
 const server = http.createServer(async (req, res) => {
     // Set CORS headers
@@ -19,7 +25,7 @@ const server = http.createServer(async (req, res) => {
     }
     
     try {
-        const internSystem = new InternManagement();
+        const internSystem = USE_MOCK ? new MockInternManagement() : new InternManagement();
         const parsedUrl = url.parse(req.url, true);
         const path = parsedUrl.pathname;
         const query = parsedUrl.query;
@@ -49,14 +55,21 @@ const server = http.createServer(async (req, res) => {
         if (path === '/interns' || path === '/') {
             if (method === 'GET') {
                 const queries = [];
-                if (query.batch) queries.push(`equal("batch", "${query.batch}")`);
-                if (query.search) queries.push(`search("internName", "${query.search}")`);
-                if (query.limit) queries.push(`limit(${parseInt(query.limit)})`);
-                if (query.offset) queries.push(`offset(${parseInt(query.offset)})`);
-                if (query.sort && query.order) {
-                    const order = query.order === 'desc' ? 'orderDesc' : 'orderAsc';
-                    queries.push(`${order}("${query.sort}")`);
+                
+                if (USE_MOCK) {
+                    // For mock, pass simple filter objects
+                    if (query.batch) queries.push({ method: 'equal', attribute: 'batch', values: [query.batch] });
+                    if (query.search) queries.push({ method: 'search', attribute: 'internName', values: [query.search] });
+                    if (query.limit) queries.push({ method: 'limit', values: [parseInt(query.limit)] });
+                    if (query.offset) queries.push({ method: 'offset', values: [parseInt(query.offset)] });
+                } else {
+                    // For Appwrite, use Query objects (when available)
+                    if (query.batch) queries.push(`equal("batch", "${query.batch}")`);
+                    if (query.search) queries.push(`search("internName", "${query.search}")`);
+                    if (query.limit) queries.push(`limit(${parseInt(query.limit)})`);
+                    if (query.offset) queries.push(`offset(${parseInt(query.offset)})`);
                 }
+                
                 result = await internSystem.getAllInterns(queries);
             } else if (method === 'POST') {
                 result = await internSystem.createIntern(body);
@@ -113,6 +126,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🔧 Mode: ${USE_MOCK ? 'MOCK DATA (for development)' : 'APPWRITE PRODUCTION'}`);
     console.log('📋 Available endpoints:');
     console.log('  GET    /interns - Get all interns');
     console.log('  POST   /interns - Create intern');
@@ -121,4 +135,11 @@ server.listen(PORT, () => {
     console.log('  DELETE /interns/:id - Delete intern');
     console.log('  GET    /interns/count - Get intern count');
     console.log('  GET    /interns/tasks/summary - Get task summary');
+    if (USE_MOCK) {
+        console.log('');
+        console.log('💡 To use Appwrite instead of mock data:');
+        console.log('   1. Copy sample.env to .env');
+        console.log('   2. Configure your Appwrite credentials');
+        console.log('   3. Restart the server');
+    }
 });

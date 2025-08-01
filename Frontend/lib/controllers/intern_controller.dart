@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/intern.dart';
 import '../services/api_service.dart';
@@ -27,8 +28,11 @@ class InternController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadInterns();
-    loadTaskSummary();
+    // Use Future.delayed to ensure widget is built before loading
+    Future.delayed(const Duration(milliseconds: 100), () {
+      loadInterns();
+      loadTaskSummary();
+    });
   }
 
   /// Load interns with optional filters
@@ -38,11 +42,11 @@ class InternController extends GetxController {
         isRefreshing.value = true;
         currentPage.value = 0;
         hasMore.value = true;
+        error.value = ''; // Clear previous errors on refresh
       } else {
         isLoading.value = true;
+        error.value = ''; // Clear previous errors
       }
-
-      error.value = '';
 
       final loadedInterns = await _apiService.getAllInterns(
         batch: selectedBatch.value.isNotEmpty ? selectedBatch.value : null,
@@ -65,15 +69,22 @@ class InternController extends GetxController {
       // Check if there are more items
       hasMore.value = loadedInterns.length == pageSize;
 
-      // Load total count
+      // Load total count only if we don't have errors
       await loadTotalCount();
     } catch (e) {
-      error.value = e.toString();
-      Get.snackbar(
-        'Error',
-        'Failed to load interns: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      error.value = e.toString().replaceAll('Exception: ', '');
+      
+      // Only show snackbar if it's not the initial load to avoid spam
+      if (refresh || currentPage.value > 0) {
+        Get.snackbar(
+          'Error',
+          'Failed to load interns: ${error.value}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red[50],
+          colorText: Colors.red[800],
+          duration: const Duration(seconds: 3),
+        );
+      }
     } finally {
       isLoading.value = false;
       isRefreshing.value = false;
