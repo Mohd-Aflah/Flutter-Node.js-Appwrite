@@ -261,35 +261,37 @@ class _InternDetailsDialogState extends State<InternDetailsDialog>
           // Statistics
           _buildSection(
             'Task Statistics',
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    'Total Tasks',
-                    '${widget.intern.tasksAssigned.length}',
-                    Icons.task_rounded,
-                    Colors.blue,
+            IntrinsicHeight( // Ensure all cards have same height
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Total Tasks',
+                      '${widget.intern.tasksAssigned.length}',
+                      Icons.task_rounded,
+                      Colors.blue,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    'Completed',
-                    '${widget.intern.completedTasksCount}',
-                    Icons.check_circle_rounded,
-                    Colors.green,
+                  const SizedBox(width: 8), // Reduced spacing from 16
+                  Expanded(
+                    child: _buildStatCard(
+                      'Completed',
+                      '${widget.intern.completedTasksCount}',
+                      Icons.check_circle_rounded,
+                      Colors.green,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    'Pending',
-                    '${widget.intern.pendingTasksCount}',
-                    Icons.pending_rounded,
-                    Colors.orange,
+                  const SizedBox(width: 8), // Reduced spacing from 16
+                  Expanded(
+                    child: _buildStatCard(
+                      'Pending',
+                      '${widget.intern.pendingTasksCount}',
+                      Icons.pending_rounded,
+                      Colors.orange,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -388,20 +390,21 @@ class _InternDetailsDialogState extends State<InternDetailsDialog>
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12), // Reduced from 16
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8), // Reduced from 12
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Minimize height
         children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
+          Icon(icon, color: color, size: 24), // Reduced from 32
+          const SizedBox(height: 4), // Reduced from 8
           Text(
             value,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 18, // Reduced from 24
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -409,10 +412,12 @@ class _InternDetailsDialogState extends State<InternDetailsDialog>
           Text(
             title,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10, // Reduced from 12
               color: color,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2, // Prevent overflow
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

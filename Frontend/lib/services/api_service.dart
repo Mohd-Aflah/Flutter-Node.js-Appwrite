@@ -294,8 +294,8 @@ class ApiService {
   // PROJECT MANAGEMENT METHODS
 
   /// Get all projects with optional filtering
-  /// Returns a list of Project objects from the backend
-  /// Supports filtering by status, priority, and search terms
+  /// TEMPORARY WORKAROUND: Extract projects from intern records since
+  /// the backend doesn't have dedicated project endpoints
   Future<List<Project>> getAllProjects({
     String? status,
     String? priority,
@@ -304,114 +304,106 @@ class ApiService {
     int? offset,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}');
+      // Get all interns to extract project information
+      final interns = await getAllInterns();
       
-      final queryParams = <String, String>{};
+      // Extract unique projects from intern records
+      final Map<String, Project> projectsMap = {};
       
-      // Add filtering parameters
-      if (status != null && status.isNotEmpty) queryParams['status'] = status;
-      if (priority != null && priority.isNotEmpty) queryParams['priority'] = priority;
-      if (search != null && search.isNotEmpty) queryParams['search'] = search;
-      if (limit != null) queryParams['limit'] = limit.toString();
-      if (offset != null) queryParams['offset'] = offset.toString();
-
-      final finalUri = queryParams.isEmpty
-          ? uri
-          : uri.replace(queryParameters: queryParams);
-
-      final response = await _client
-          .get(finalUri, headers: _headers)
-          .timeout(AppConfig.connectTimeout);
-
-      final data = _handleResponse(response);
-
-      if (data['success'] == true && data['data'] is List) {
-        final projectsData = data['data'] as List;
-        return projectsData.map((json) => Project.fromJson(json)).toList();
-      } else {
-        throw Exception(data['error'] ?? 'Unable to load projects');
+      for (final intern in interns) {
+        for (final projectName in intern.currentProjects) {
+          if (projectName.isNotEmpty && !projectsMap.containsKey(projectName)) {
+            // Create a mock project based on the project name
+            final project = Project(
+              id: projectName.toLowerCase().replaceAll(' ', '_').replaceAll(RegExp(r'[^a-z0-9_]'), ''),
+              name: projectName,
+              description: 'Project: $projectName',
+              status: 'active', // Default status
+              priority: 'medium', // Default priority
+              deadline: DateTime.now().add(const Duration(days: 60)),
+              currentInterns: interns
+                  .where((i) => i.currentProjects.contains(projectName))
+                  .length,
+              createdAt: DateTime.now().subtract(const Duration(days: 30)),
+              updatedAt: DateTime.now(),
+            );
+            projectsMap[projectName] = project;
+          }
+        }
       }
-    } on TimeoutException {
-      throw Exception('Connection timeout. Please check your internet connection.');
-    } on SocketException {
-      throw Exception('No internet connection. Please check your network.');
+      
+      List<Project> projects = projectsMap.values.toList();
+      
+      // Apply filters
+      if (search != null && search.isNotEmpty) {
+        projects = projects.where((p) => 
+          p.name.toLowerCase().contains(search.toLowerCase()) ||
+          p.description.toLowerCase().contains(search.toLowerCase())
+        ).toList();
+      }
+      
+      if (status != null && status.isNotEmpty) {
+        projects = projects.where((p) => p.status == status).toList();
+      }
+      
+      if (priority != null && priority.isNotEmpty) {
+        projects = projects.where((p) => p.priority == priority).toList();
+      }
+      
+      // Apply pagination
+      if (offset != null && offset > 0) {
+        projects = projects.skip(offset).toList();
+      }
+      
+      if (limit != null && limit > 0) {
+        projects = projects.take(limit).toList();
+      }
+      
+      return projects;
     } catch (e) {
-      if (e.toString().contains('Exception:')) {
-        rethrow;
-      }
-      throw Exception('Failed to connect to server. Please try again later.');
+      throw Exception('Failed to load projects: $e');
     }
   }
 
   /// Get a specific project by ID
-  /// Returns a single Project object from the backend
+  /// TEMPORARY WORKAROUND: Extract project from intern records
   Future<Project> getProject(String projectId) async {
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}/$projectId');
-
-      final response = await _client
-          .get(uri, headers: _headers)
-          .timeout(AppConfig.connectTimeout);
-
-      final data = _handleResponse(response);
-
-      if (data['success'] == true && data['data'] is Map) {
-        return Project.fromJson(data['data']);
-      } else {
-        throw Exception(data['error'] ?? 'Project not found');
-      }
+      final projects = await getAllProjects();
+      final project = projects.firstWhere(
+        (p) => p.id == projectId,
+        orElse: () => throw Exception('Project not found'),
+      );
+      return project;
     } catch (e) {
       throw Exception('Failed to get project: $e');
     }
   }
 
   /// Create a new project
-  /// Sends project data to backend and returns the created Project object
+  /// TEMPORARY WORKAROUND: Projects are managed through intern assignments
+  /// This is a placeholder until backend project endpoints are implemented
   Future<Project> createProject(Project project) async {
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}');
-
-      final response = await _client
-          .post(
-            uri,
-            headers: _headers,
-            body: json.encode(project.toJson()),
-          )
-          .timeout(AppConfig.connectTimeout);
-
-      final data = _handleResponse(response);
-
-      if (data['success'] == true && data['data'] is Map) {
-        return Project.fromJson(data['data']);
-      } else {
-        throw Exception(data['error'] ?? 'Failed to create project');
-      }
+      // Since projects are managed through intern assignments,
+      // we'll just return the project as-is for now
+      // In a real implementation, you'd want to store this in a separate collection
+      return project.copyWith(
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
     } catch (e) {
       throw Exception('Failed to create project: $e');
     }
   }
 
   /// Update an existing project
-  /// Sends updated project data to backend and returns the updated Project object
+  /// TEMPORARY WORKAROUND: Projects are managed through intern assignments
   Future<Project> updateProject(String projectId, Project project) async {
     try {
-      final uri = Uri.parse('${AppConfig.baseUrl}${AppConfig.projectsEndpoint}/$projectId');
-
-      final response = await _client
-          .patch(
-            uri,
-            headers: _headers,
-            body: json.encode(project.toJson()),
-          )
-          .timeout(AppConfig.connectTimeout);
-
-      final data = _handleResponse(response);
-
-      if (data['success'] == true && data['data'] is Map) {
-        return Project.fromJson(data['data']);
-      } else {
-        throw Exception(data['error'] ?? 'Failed to update project');
-      }
+      // Since projects are managed through intern assignments,
+      // we'll just return the updated project as-is for now
+      return project.copyWith(updatedAt: DateTime.now());
     } catch (e) {
       throw Exception('Failed to update project: $e');
     }

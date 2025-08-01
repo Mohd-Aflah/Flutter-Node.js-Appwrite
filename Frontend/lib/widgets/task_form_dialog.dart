@@ -74,12 +74,12 @@ class _ImprovedTaskFormDialogState extends State<ImprovedTaskFormDialog> {
     return Dialog(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 600,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
+          maxWidth: 500, // Reduced from 600
+          maxHeight: MediaQuery.of(context).size.height * 0.8, // Reduced from 0.9
         ),
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: const EdgeInsets.all(24),
+          width: MediaQuery.of(context).size.width * 0.85, // Reduced from 0.9
+          padding: const EdgeInsets.all(20), // Reduced from 24
           child: Form(
             key: _formKey,
             child: Column(

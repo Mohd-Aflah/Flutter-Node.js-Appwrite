@@ -16,7 +16,7 @@ class HomeScreen extends StatelessWidget {
     final isMobile = screenWidth < 768;
 
     return Padding(
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 20), // Reduced from 16 : 24
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -241,7 +241,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color, bool isMobile) {
     return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      padding: EdgeInsets.all(isMobile ? 12 : 16), // Reduced padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
@@ -260,12 +260,12 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.all(isMobile ? 8 : 12),
+                padding: EdgeInsets.all(isMobile ? 6 : 10), // Reduced icon padding
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
                 ),
-                child: Icon(icon, color: color, size: isMobile ? 20 : 24),
+                child: Icon(icon, color: color, size: isMobile ? 18 : 22), // Reduced icon size
               ),
               Icon(
                 Icons.trending_up_rounded,
@@ -301,7 +301,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildSearchAndFilters(InternController controller, bool isMobile) {
     return Container(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      padding: EdgeInsets.all(isMobile ? 12 : 16), // Reduced from 16 : 20
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
@@ -561,7 +561,7 @@ class HomeScreen extends StatelessWidget {
           onTap: () => _showInternDetails(context, intern),
           borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
           child: Padding(
-            padding: EdgeInsets.all(isMobile ? 16 : 20),
+            padding: EdgeInsets.all(isMobile ? 12 : 16), // Reduced padding
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
